@@ -48,11 +48,24 @@ static int gettok() {
     return tok_identifier;
   }
 
+
   if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+
     std::string NumStr;
+    bool PeriodEncountered(0);
+
     do {
-      NumStr += LastChar;
-      LastChar = getchar();
+        // makes sure additional periods are discarded so that 1.23.4 is read as 1.234 instead of 1.23
+        if(LastChar == '.'){
+            if(!PeriodEncountered)
+                PeriodEncountered = 1;
+            else{
+                LastChar = getchar();
+                continue;
+            }
+        }
+
+        NumStr += LastChar;
+        LastChar = getchar();
     } while (isdigit(LastChar) || LastChar == '.');
 
     NumVal = strtod(NumStr.c_str(), nullptr);
@@ -403,7 +416,7 @@ static void HandleTopLevelExpression() {
 /// top ::= definition | external | expression | ';'
 static void MainLoop() {
   while (true) {
-    fprintf(stderr, "ready> ");
+    fprintf(stderr, ">> ");
     switch (CurTok) {
     case tok_eof:
       return;
@@ -427,7 +440,7 @@ static void MainLoop() {
 // Main driver code.
 //===----------------------------------------------------------------------===//
 
-int main() {
+int test_syntax() {
   // Install standard binary operators.
   // 1 is lowest precedence.
   BinopPrecedence['<'] = 10;
@@ -436,11 +449,15 @@ int main() {
   BinopPrecedence['*'] = 40; // highest.
 
   // Prime the first token.
-  fprintf(stderr, "ready> ");
+  fprintf(stderr, ">> ");
   getNextToken();
 
   // Run the main "interpreter loop" now.
   MainLoop();
 
   return 0;
+}
+
+int main(){
+    test_syntax();
 }
