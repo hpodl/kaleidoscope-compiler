@@ -1,12 +1,5 @@
 #include "ExprAST.hpp"
 
-class NumberExprAST;
-class VariableExprAST;
-class BinaryExprAST;
-class CallExprAST;
-class PrototypeAST;
-class FunctionAST;
-
 class Visitor{
 public:
     virtual void visitNumberExprAST(const NumberExprAST* exp) = 0;
