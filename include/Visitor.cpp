@@ -1,4 +1,5 @@
 #include "ExprAST.hpp"
+#include "/usr/include/llvm/IR/Value.h"
 
 class Visitor{
 public:
@@ -11,14 +12,14 @@ public:
 };
 
 class CodeGenVisitor{
-    // llvm::Value* gencode; 
+    llvm::Value* generated; 
 public:
     void visitNumberExprAST(const NumberExprAST* exp){
 
     }
     void visitVariableExprAST(const VariableExprAST* exp){
-
     }
+
     void visitBinaryExprAST(const BinaryExprAST* exp){
 
     }

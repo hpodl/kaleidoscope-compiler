@@ -3,19 +3,6 @@
 
 #include "ExprAST.hpp"
 
-// TODO: remove absolute paths
-#include "/usr/include/llvm/ADT/APFloat.h"
-#include "/usr/include/llvm/ADT/STLExtras.h"
-#include "/usr/include/llvm/IR/BasicBlock.h"
-#include "/usr/include/llvm/IR/Constants.h"
-#include "/usr/include/llvm/IR/DerivedTypes.h"
-#include "/usr/include/llvm/IR/Function.h"
-#include "/usr/include/llvm/IR/IRBuilder.h"
-#include "/usr/include/llvm/IR/LLVMContext.h"
-#include "/usr/include/llvm/IR/Module.h"
-#include "/usr/include/llvm/IR/Type.h"
-#include "/usr/include/llvm/IR/Verifier.h"
-
 class NumberExprAST;
 class VariableExprAST;
 class BinaryExprAST;

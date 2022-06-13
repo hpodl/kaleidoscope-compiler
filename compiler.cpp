@@ -7,13 +7,34 @@
 #include <utility>
 #include <vector>
 
+
+// TODO: remove absolute paths
+#include "/usr/include/llvm/ADT/APFloat.h"
+#include "/usr/include/llvm/ADT/STLExtras.h"
+#include "/usr/include/llvm/IR/BasicBlock.h"
+#include "/usr/include/llvm/IR/Constants.h"
+#include "/usr/include/llvm/IR/DerivedTypes.h"
+#include "/usr/include/llvm/IR/Function.h"
+#include "/usr/include/llvm/IR/IRBuilder.h"
+#include "/usr/include/llvm/IR/LLVMContext.h"
+#include "/usr/include/llvm/IR/Module.h"
+#include "/usr/include/llvm/IR/Type.h"
+#include "/usr/include/llvm/IR/Verifier.h"
+
+
 #include "include/ExprAST.hpp"
 #include "include/Lexer.hpp"
 #include "include/Parser.hpp"
 
-//===----------------------------------------------------------------------===//
-// Top-Level parsing
-//===----------------------------------------------------------------------===//
+static llvm::LLVMContext TheContext;
+static llvm::IRBuilder<> Builder(TheContext);
+static std::unique_ptr<llvm::Module> TheModule;
+static std::map<std::string, llvm::Value*> NamedValues;
+
+llvm::Value *LogErrorV(const char *str){
+  LogError(str);
+  return nullptr;
+}
 
 static void HandleDefinition() {
   if (ParseDefinition()) {
