@@ -1,8 +1,11 @@
+#ifndef EXPRAST_H
+#define EXPRAST_H
+
 #include <string>
 #include <vector>
 #include <memory>
+#include "Visitor.hpp"
 
-/// ExprAST - Base class for all expression nodes.
 class ExprAST {
 public:
   virtual ~ExprAST() = default;
@@ -13,14 +16,16 @@ class NumberExprAST : public ExprAST {
   double Val;
 public:
   NumberExprAST(double Val) : Val(Val) {}
+  void accept(Visitor *visitor);
 };
 
 /// VariableExprAST - Expression class for referencing a variable, like "a".
 class VariableExprAST : public ExprAST {
   std::string Name;
-
 public:
   VariableExprAST(const std::string &Name) : Name(Name) {}
+  
+  void accept(Visitor *visitor);
 };
 
 /// BinaryExprAST - Expression class for a binary operator.
@@ -32,6 +37,8 @@ public:
   BinaryExprAST(char Op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
       : Op(Op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
+
+    void accept(Visitor *visitor);
 };
 
 /// CallExprAST - Expression class for function calls.
@@ -43,6 +50,9 @@ public:
   CallExprAST(const std::string &Callee,
               std::vector<std::unique_ptr<ExprAST>> Args)
       : Callee(Callee), Args(std::move(Args)) {}
+
+  void accept(Visitor *visitor);
+
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
@@ -57,6 +67,8 @@ public:
       : Name(Name), Args(std::move(Args)) {}
 
   const std::string &getName() const { return Name; }
+
+  void accept(Visitor *visitor);
 };
 
 /// FunctionAST - This class represents a function definition itself.
@@ -68,4 +80,9 @@ public:
   FunctionAST(std::unique_ptr<PrototypeAST> Proto,
               std::unique_ptr<ExprAST> Body)
       : Proto(std::move(Proto)), Body(std::move(Body)) {}
+
+  void accept(Visitor *visitor);
 };
+
+
+#endif

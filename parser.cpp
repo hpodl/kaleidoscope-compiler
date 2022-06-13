@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "include/ExprAST.h"
+#include "include/ExprAST.hpp"
 
 //===----------------------------------------------------------------------===//
 // Lexer
