@@ -24,10 +24,13 @@
 #include "include/Lexer.hpp"
 #include "include/Parser.hpp"
 
-static llvm::LLVMContext TheContext;
-static llvm::IRBuilder<> Builder(TheContext);
-static std::unique_ptr<llvm::Module> TheModule;
-static std::map<std::string, llvm::Value*> NamedValues;
+
+  using namespace llvm;
+
+static LLVMContext TheContext;
+static IRBuilder<> Builder(TheContext);
+static std::unique_ptr<Module> TheModule;
+static std::map<std::string, Value*> NamedValues;
 
 llvm::Value *LogErrorV(const char *str){
   LogError(str);
@@ -104,11 +107,40 @@ int main(){
     test_syntax();
 }
 
+
+
   Value* NumberExprAST::codegen(){
-    
+    return ConstantFP::get(TheContext, APFloat(Val));  
   }
-  Value* VariableExprAST::codegen(){}
-  Value* BinaryExprAST::codegen(){}
+  Value* VariableExprAST::codegen(){
+    Value* val = NamedValues[Name];
+    if(!val) 
+      LogErrorV("Unknown variable name");
+    return val;
+  }
+
+  Value* BinaryExprAST::codegen(){
+    Value *L = LHS->codegen();
+    Value *R = RHS->codegen();
+    if(!L || !R)
+      return nullptr;
+
+    switch(Op){
+      case '+':
+        return Builder.CreateFAdd(L, R, "addtmp");
+      case '-':
+        return Builder.CreateFSub(L, R, "subtmp");
+      case '*':
+        return Builder.CreateFMul(L, R, "multmp");
+      case '<':
+        L = Builder.CreateFCmpULT(L, R, "cmptmp");
+        return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), "booltmp");
+
+        default:
+          return LogErrorV("Invalid binary operator");
+    }
+  }
+  
   Value* CallExprAST::codegen(){}
   Value* PrototypeAST::codegen(){}
   Value* FunctionAST::codegen(){}
