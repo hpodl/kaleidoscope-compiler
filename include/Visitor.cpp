@@ -1,5 +1,21 @@
 #include "ExprAST.hpp"
-#include "/usr/include/llvm/IR/Value.h"
+#include "/usr/include/llvm/ADT/APFloat.h"
+#include "/usr/include/llvm/ADT/STLExtras.h"
+#include "/usr/include/llvm/IR/BasicBlock.h"
+#include "/usr/include/llvm/IR/Constants.h"
+#include "/usr/include/llvm/IR/DerivedTypes.h"
+#include "/usr/include/llvm/IR/Function.h"
+#include "/usr/include/llvm/IR/IRBuilder.h"
+#include "/usr/include/llvm/IR/LLVMContext.h"
+#include "/usr/include/llvm/IR/Module.h"
+#include "/usr/include/llvm/IR/Type.h"
+#include "/usr/include/llvm/IR/Verifier.h"
+
+
+extern llvm::LLVMContext TheContext;
+extern llvm::IRBuilder<> Builder(TheContext);
+extern std::unique_ptr<llvm::Module> TheModule;
+extern std::map<std::string, llvm::Value*> NamedValues;
 
 class Visitor{
 public:
