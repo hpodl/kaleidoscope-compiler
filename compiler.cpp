@@ -184,9 +184,26 @@ int main(){
       return function;
     }
 
+    // Failed to read body, removing function
+    function->eraseFromParent();
+    return nullptr;
   }
 
   Value* CallExprAST::codegen(){
+    Function *caleeF = TheModule->getFunction(Callee);
+    if(!caleeF)
+      return LogErrorV("Unknown function referenced");
 
-  }
+    if(caleeF->arg_size() != Args.size())
+      return LogErrorV("Invalid argument count");
+
+    std::vector<Value*> ArgsV;
+    for(unsigned i = 0, e = Args.size(); i != e; ++i){
+      ArgsV.push_back(Args[i]->codegen());
+      
+      if(!ArgsV.back())
+        return nullptr;
+    }
+  return Builder.CreateCall(caleeF, ArgsV, "calltmp");
+}
 
