@@ -25,7 +25,7 @@
 #include "include/Parser.hpp"
 
 
-  using namespace llvm;
+using namespace llvm;
 
 static LLVMContext TheContext;
 static IRBuilder<> Builder(TheContext);
@@ -133,7 +133,9 @@ int main(){
       case '*':
         return Builder.CreateFMul(L, R, "multmp");
       case '<':
+        // ult: yields true if either operand is a QNAN or op1 is less than op2
         L = Builder.CreateFCmpULT(L, R, "cmptmp");
+        // unsigned int to floating point
         return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), "booltmp");
 
         default:
@@ -141,7 +143,50 @@ int main(){
     }
   }
   
-  Value* CallExprAST::codegen(){}
-  Value* PrototypeAST::codegen(){}
-  Value* FunctionAST::codegen(){}
+  Function* PrototypeAST::codegen(){
+    std::vector<Type*> doubles(Args.size(), Type::getDoubleTy(TheContext));
+    FunctionType *FT = FunctionType::get(Type::getDoubleTy(TheContext), doubles, false);
+    Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+
+    unsigned Idx = 0;
+    for(auto &Arg : F->args())
+      Arg.setName(Args[Idx++]);
+
+    return F;
+  }
+  
+  Function* FunctionAST::codegen(){
+    Function *function = TheModule->getFunction(Proto->getName());
+
+    // hasn't been defined as extern
+    if(!function)
+      function = Proto->codegen();
+
+    if(!function)
+      return nullptr;
+
+    // already has a body
+    if(!function->empty())
+      return (Function*)LogErrorV("Function cannot be redefined");
+
+    // only 1 block in a function for now
+    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", function);
+    Builder.SetInsertPoint(BB);
+
+    NamedValues.clear();
+    for(auto &Arg : function->args())
+      NamedValues[std::string(Arg.getName())] = &Arg;
+
+    if(Value *RetVal = Body->codegen()){
+      Builder.CreateRet(RetVal);
+      verifyFunction(*function);
+
+      return function;
+    }
+
+  }
+
+  Value* CallExprAST::codegen(){
+
+  }
 

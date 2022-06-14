@@ -5,8 +5,10 @@
 #include <vector>
 #include <memory>
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Function.h"
 
 using Value = llvm::Value;
+using Function = llvm::Function;
 
 class ExprAST {
 public:
@@ -65,7 +67,7 @@ public:
       : Name(Name), Args(std::move(Args)) {}
 
   const std::string &getName() const { return Name; }
-  Value* codegen();
+  Function* codegen();
 };
 
 /// FunctionAST - This class represents a function definition itself.
@@ -77,7 +79,7 @@ public:
   FunctionAST(std::unique_ptr<PrototypeAST> Proto,
               std::unique_ptr<ExprAST> Body)
       : Proto(std::move(Proto)), Body(std::move(Body)) {}
-  Value* codegen();
+  Function* codegen();
 };
 
 
