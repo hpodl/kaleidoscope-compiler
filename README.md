@@ -1,3 +1,9 @@
-# KALEIDOSCOPE_COMPILER
+## [WIP] kaleidoscope-compiler
 
-A simple compiler for a small language called "Kaleidoscope" written alongside [this LLVM tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html) with some twists of my own. Only the parser is implemented currently. 
+A simple compiler for a programming language called <i>Kaleidoscope</i> written alongside [this LLVM tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html) with some twists of my own.<br>
+
+
+#### Shorterm goals:
+- [x] lexer
+- [x] parser
+- [ ] intermediate codegen
