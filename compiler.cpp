@@ -27,10 +27,10 @@
 
 using namespace llvm;
 
-static LLVMContext TheContext;
-static IRBuilder<> Builder(TheContext);
+static std::unique_ptr<LLVMContext> TheContext;
 static std::unique_ptr<Module> TheModule;
-static std::map<std::string, Value*> NamedValues;
+static std::unique_ptr<IRBuilder<>> Builder;
+static std::map<std::string, Value *> NamedValues;
 
 llvm::Value *LogErrorV(const char *str){
   LogError(str);
@@ -38,8 +38,12 @@ llvm::Value *LogErrorV(const char *str){
 }
 
 static void HandleDefinition() {
-  if (ParseDefinition()) {
-    fprintf(stderr, "Parsed a function definition.\n");
+  if (auto FnAST = ParseDefinition()) {
+    if (auto *FnIR = FnAST->codegen()) {
+      fprintf(stderr, "Read function definition:");
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+    }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -47,8 +51,12 @@ static void HandleDefinition() {
 }
 
 static void HandleExtern() {
-  if (ParseExtern()) {
-    fprintf(stderr, "Parsed an extern\n");
+  if (auto ProtoAST = ParseExtern()) {
+    if (auto *FnIR = ProtoAST->codegen()) {
+      fprintf(stderr, "Read extern: ");
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+    }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -57,8 +65,15 @@ static void HandleExtern() {
 
 static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
-  if (ParseTopLevelExpr()) {
-    fprintf(stderr, "Parsed a top-level expr\n");
+  if (auto FnAST = ParseTopLevelExpr()) {
+    if (auto *FnIR = FnAST->codegen()) {
+      fprintf(stderr, "Read top-level expression:");
+      FnIR->print(errs());
+      fprintf(stderr, "\n");
+
+      // Remove the anonymous expression.
+      FnIR->eraseFromParent();
+    }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -92,25 +107,35 @@ static void MainLoop() {
 // Main driver code.
 //===----------------------------------------------------------------------===//
 
-int test_syntax() {
+static void InitializeModule() {
+  // Open a new context and module.
+  TheContext = std::make_unique<LLVMContext>();
+  TheModule = std::make_unique<Module>("my module", *TheContext);
+
+  // Create a new builder for the module.
+  Builder = std::make_unique<IRBuilder<>>(*TheContext);
+}
+
+int main() {
   // Prime the first token.
-  fprintf(stderr, ">> ");
+  fprintf(stderr, "ready> ");
   getNextToken();
+
+  // Make the module, which holds all the code.
+  InitializeModule();
 
   // Run the main "interpreter loop" now.
   MainLoop();
 
+  // Print out all of the generated code.
+  TheModule->print(errs(), nullptr);
+
   return 0;
 }
 
-int main(){
-    test_syntax();
-}
-
-
 
   Value* NumberExprAST::codegen(){
-    return ConstantFP::get(TheContext, APFloat(Val));  
+    return ConstantFP::get(*TheContext, APFloat(Val));  
   }
   Value* VariableExprAST::codegen(){
     Value* val = NamedValues[Name];
@@ -127,16 +152,16 @@ int main(){
 
     switch(Op){
       case '+':
-        return Builder.CreateFAdd(L, R, "addtmp");
+        return Builder->CreateFAdd(L, R, "addtmp");
       case '-':
-        return Builder.CreateFSub(L, R, "subtmp");
+        return Builder->CreateFSub(L, R, "subtmp");
       case '*':
-        return Builder.CreateFMul(L, R, "multmp");
+        return Builder->CreateFMul(L, R, "multmp");
       case '<':
         // ult: yields true if either operand is a QNAN or op1 is less than op2
-        L = Builder.CreateFCmpULT(L, R, "cmptmp");
+        L = Builder->CreateFCmpULT(L, R, "cmptmp");
         // unsigned int to floating point
-        return Builder.CreateUIToFP(L, Type::getDoubleTy(TheContext), "booltmp");
+        return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
 
         default:
           return LogErrorV("Invalid binary operator");
@@ -144,8 +169,8 @@ int main(){
   }
   
   Function* PrototypeAST::codegen(){
-    std::vector<Type*> doubles(Args.size(), Type::getDoubleTy(TheContext));
-    FunctionType *FT = FunctionType::get(Type::getDoubleTy(TheContext), doubles, false);
+    std::vector<Type*> doubles(Args.size(), Type::getDoubleTy(*TheContext));
+    FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), doubles, false);
     Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
 
     unsigned Idx = 0;
@@ -170,15 +195,15 @@ int main(){
       return (Function*)LogErrorV("Function cannot be redefined");
 
     // only 1 block in a function for now
-    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", function);
-    Builder.SetInsertPoint(BB);
+    BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", function);
+    Builder->SetInsertPoint(BB);
 
     NamedValues.clear();
     for(auto &Arg : function->args())
       NamedValues[std::string(Arg.getName())] = &Arg;
 
     if(Value *RetVal = Body->codegen()){
-      Builder.CreateRet(RetVal);
+      Builder->CreateRet(RetVal);
       verifyFunction(*function);
 
       return function;
@@ -204,6 +229,6 @@ int main(){
       if(!ArgsV.back())
         return nullptr;
     }
-  return Builder.CreateCall(caleeF, ArgsV, "calltmp");
+  return Builder->CreateCall(caleeF, ArgsV, "calltmp");
 }
 
