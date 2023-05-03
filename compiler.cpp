@@ -181,10 +181,13 @@ int main() {
   }
   
   Function* FunctionAST::codegen(){
-    Function *function = TheModule->getFunction(Proto->getName());
+    Function *function;
+    Function *priorFun = TheModule->getFunction(Proto->getName());
+    
+    function = priorFun;
 
-    // hasn't been defined as extern
-    if(!function)
+    // no extern definition
+    if(!priorFun)
       function = Proto->codegen();
 
     if(!function)
@@ -193,6 +196,25 @@ int main() {
     // already has a body
     if(!function->empty())
       return (Function*)LogErrorV("Function cannot be redefined");
+
+    // compares 'extern' prototype with current 'def' prototype
+    if(priorFun){
+      Function* newProto = Proto->codegen();
+      if(!newProto)
+        return nullptr;
+      
+      if(newProto->arg_size() != function->arg_size()) {
+        return (Function*)LogErrorV("Prototype mismatch with preceding 'extern' declaration.");
+      }
+
+      // updating argument names to fit the function definition
+      size_t argc = function->arg_size();
+      for(size_t i = 0; i < argc; i++) {
+        function->getArg(i)->setName(newProto->getArg(i)->getName());
+      }
+
+      newProto->eraseFromParent();
+    }
 
     // only 1 block in a function for now
     BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", function);
