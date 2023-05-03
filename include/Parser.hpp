@@ -3,7 +3,6 @@
 #include "ExprAST.hpp"
 #include "Parser.cpp"
 
-
 static std::unique_ptr<ExprAST> ParseExpression();
 /// GetTokPrecedence - Get the precedence of the pending binary operator token.
 static int GetTokPrecedence();
@@ -31,7 +30,8 @@ static std::unique_ptr<ExprAST> ParsePrimary();
 
 /// binoprhs
 ///   ::= ('+' primary)*
-static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec, std::unique_ptr<ExprAST> LHS);
+static std::unique_ptr<ExprAST> ParseBinOpRHS(
+    int ExprPrec, std::unique_ptr<ExprAST> LHS);
 
 /// expression
 ///   ::= primary binoprhs

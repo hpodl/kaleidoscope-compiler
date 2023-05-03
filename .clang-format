@@ -1,0 +1,6 @@
+---
+AlignAfterOpenBracket: DontAlign
+TabWidth: '4'
+IndentWidth: '4'
+AlignTrailingComments: 'true'
+...
